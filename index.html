@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Highway Racer - Ninja Bike Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: white;
+            touch-action: none;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 4px solid #38bdf8;
+            background: #0f172a;
+        }
+
+        .game-wrapper {
+            position: relative;
+            background: #2e8b57;
+        }
+
+        canvas {
+            display: block;
+            background: #2e8b57;
+        }
+
+        /* HUD (Score & Speedometer) */
+        .hud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .hud-box {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(5px);
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .hud-box span {
+            color: #38bdf8;
+        }
+
+        /* স্টিয়ারিং ও পেডেল কন্ট্রোল প্যানেল */
+        .control-panel {
+            width: 100%;
+            background: #0f172a;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 12px 15px;
+            border-top: 2px solid #38bdf8;
+        }
+
+        /* ভার্চুয়াল স্টিয়ারিং হুইল ডিজাইন */
+        #steeringWheel {
+            width: 110px;
+            height: 110px;
+            background: radial-gradient(circle, #334155 35%, #1e293b 70%, #0f172a 100%);
+            border: 6px solid #475569;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+            cursor: pointer;
+            touch-action: none;
+        }
+
+        #steeringWheel::before {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 80%;
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        #steeringWheel::after {
+            content: '';
+            position: absolute;
+            width: 80%;
+            height: 14px;
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        .wheel-center {
+            width: 36px;
+            height: 36px;
+            background: #ef4444;
+            border-radius: 50%;
+            z-index: 2;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.4);
+        }
+
+        /* পেডেল (ব্রেক ও অ্যাক্সিলারেটর) */
+        .pedals {
+            display: flex;
+            gap: 15px;
+        }
+
+        .pedal-btn {
+            width: 65px;
+            height: 55px;
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        #brakePedal {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            border-color: #fca5a5;
+        }
+
+        #accelPedal {
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+            border-color: #86efac;
+        }
+
+        .pedal-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Start & Game Over Screen */
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 10;
+            padding: 20px;
+        }
+
+        .overlay h1 {
+            font-size: 38px;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .overlay p {
+            color: #cbd5e1;
+            margin-bottom: 20px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        button {
+            background: linear-gradient(135deg, #0284c7, #38bdf8);
+            color: white;
+            border: none;
+            padding: 14px 35px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(56, 189, 248, 0.4);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="game-wrapper">
+        <div class="hud">
+            <div class="hud-box">SCORE: <span id="scoreDisplay">0</span></div>
+            <div class="hud-box">SPEED: <span id="speedDisplay">0</span> KM/H</div>
+        </div>
+
+        <div id="startScreen" class="overlay">
+            <h1>Ninja Highway</h1>
+            <p>নিঞ্জা বাইক নিয়ে হাইওয়েতে ছুটুন এবং ট্রাফিক এড়িয়ে চলুন!</p>
+            <button onclick="startGame()">START RIDE</button>
+        </div>
+
+        <div id="gameOverScreen" class="overlay hidden">
+            <h1 style="color: #f43f5e;">CRASHED!</h1>
+            <p id="finalScoreText" style="font-size: 20px; font-weight: bold; margin-bottom: 20px;">Score: 0</p>
+            <button onclick="startGame()">PLAY AGAIN</button>
+        </div>
+
+        <canvas id="gameCanvas" width="480" height="460"></canvas>
+    </div>
+
+    <!-- স্টিয়ারিং ও পেডেল কন্ট্রোল প্যানেল -->
+    <div class="control-panel">
+        <div id="steeringWheel">
+            <div class="wheel-center"></div>
+        </div>
+
+        <div class="pedals">
+            <div class="pedal-btn" id="brakePedal">ব্রেক</div>
+            <div class="pedal-btn" id="accelPedal">রেস</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const speedDisplay = document.getElementById('speedDisplay');
+    const startScreen = document.getElementById('startScreen');
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const finalScoreText = document.getElementById('finalScoreText');
+
+    let isGameRunning = false;
+    let score = 0;
+    let roadOffset = 0;
+    let animationId;
+
+    const roadX = 80;
+    const roadWidth = 320;
+    const laneCount = 3;
+    const laneWidth = roadWidth / laneCount;
+
+    // প্লেয়ার নিঞ্জা বাইক অবজেক্ট (স্লিম সাইজ)
+    const player = {
+        x: canvas.width / 2 - 16,
+        y: canvas.height - 110,
+        width: 32,
+        height: 85,
+        speed: 0,
+        maxSpeed: 20,
+        acceleration: 0.3,
+        friction: 0.08,
+        brakePower: 0.5,
+        vx: 0,
+        turnSpeed: 0.75,
+        turnFriction: 0.85,
+        angle: 0
+    };
+
+    const keys = { up: false, down: false, left: false, right: false };
+
+    function bindPedal(id, keyName) {
+        const btn = document.getElementById(id);
+        if(!btn) return;
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyName] = true; });
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyName] = false; });
+        btn.addEventListener('mousedown', (e) => { e.preventDefault(); keys[keyName] = true; });
+        btn.addEventListener('mouseup', (e) => { e.preventDefault(); keys[keyName] = false; });
+    }
+
+    bindPedal('accelPedal', 'up');
+    bindPedal('brakePedal', 'down');
+
+    // স্টিয়ারিং হুইল ড্র্যাগ লজিক
+    const steeringWheel = document.getElementById('steeringWheel');
+    let isSteeringActive = false;
+    let wheelCenterX = 0;
+    let currentWheelAngle = 0;
+
+    steeringWheel.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        isSteeringActive = true;
+        const rect = steeringWheel.getBoundingClientRect();
+        wheelCenterX = rect.left + rect.width / 2;
+    });
+
+    window.addEventListener('touchmove', (e) => {
+        if (!isSteeringActive) return;
+        e.preventDefault();
+        let touchX = e.touches[0].clientX;
+        let diff = touchX - wheelCenterX;
+        
+        currentWheelAngle = Math.max(-60, Math.min(60, diff * 1.5));
+        steeringWheel.style.transform = `rotate(${currentWheelAngle}deg)`;
+
+        if (currentWheelAngle < -5) {
+            keys.left = true;
+            keys.right = false;
+        } else if (currentWheelAngle > 5) {
+            keys.right = true;
+            keys.left = false;
+        } else {
+            keys.left = false;
+            keys.right = false;
+        }
+    });
+
+    function resetSteering() {
+        isSteeringActive = false;
+        currentWheelAngle = 0;
+        steeringWheel.style.transform = `rotate(0deg)`;
+        keys.left = false;
+        keys.right = false;
+    }
+
+    steeringWheel.addEventListener('touchend', resetSteering);
+    window.addEventListener('mouseup', resetSteering);
+
+    steeringWheel.addEventListener('mousedown', (e) => {
+        isSteeringActive = true;
+        const rect = steeringWheel.getBoundingClientRect();
+        wheelCenterX = rect.left + rect.width / 2;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isSteeringActive) return;
+        let diff = e.clientX - wheelCenterX;
+        currentWheelAngle = Math.max(-60, Math.min(60, diff * 1.5));
+        steeringWheel.style.transform = `rotate(${currentWheelAngle}deg)`;
+
+        if (currentWheelAngle < -5) {
+            keys.left = true;
+            keys.right = false;
+        } else if (currentWheelAngle > 5) {
+            keys.right = true;
+            keys.left = false;
+        } else {
+            keys.left = false;
+            keys.right = false;
+        }
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') keys.up = true;
+        if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') keys.down = true;
+        if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') keys.left = true;
+        if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') keys.right = true;
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') keys.up = false;
+        if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') keys.down = false;
+        if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') keys.left = false;
+        if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') keys.right = false;
+    });
+
+    let trees = [];
+    let enemies = [];
+    let particles = [];
+    const enemyColors = ['#ef4444', '#eab308', '#a855f7', '#ec4899', '#14b8a6'];
+
+    function initEnvironment() {
+        trees = [];
+        for (let i = 0; i < 12; i++) {
+            trees.push({
+                x: Math.random() < 0.5 ? Math.random() * 40 + 10 : Math.random() * 40 + 430,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 12 + 18
+            });
+        }
+    }
+
+    function spawnEnemy() {
+        const lane = Math.floor(Math.random() * laneCount);
+        const enemyX = roadX + lane * laneWidth + (laneWidth - 44) / 2;
+        
+        for (let enemy of enemies) {
+            if (Math.abs(enemy.y - (-100)) < 180) return;
+        }
+
+        enemies.push({
+            x: enemyX,
+            y: -100,
+            width: 44,
+            height: 85,
+            speed: Math.random() * 3 + 4,
+            color: enemyColors[Math.floor(Math.random() * enemyColors.length)]
+        });
+    }
+
+    // শত্রু গাড়ি রেন্ডারিং ফাংশন
+    function drawCar(x, y, width, height, color, angle = 0) {
+        ctx.save();
+        ctx.translate(x + width / 2, y + height / 2);
+        ctx.rotate(angle);
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.beginPath();
+        ctx.roundRect(-width / 2 + 5, -height / 2 + 8, width, height, 10);
+        ctx.fill();
+
+        ctx.fillStyle = '#111';
+        ctx.fillRect(-width / 2 - 3, -height / 2 + 12, 4, 18);
+        ctx.fillRect(width / 2 - 1, -height / 2 + 12, 4, 18);
+        ctx.fillRect(-width / 2 - 3, height / 2 - 28, 4, 18);
+        ctx.fillRect(width / 2 - 1, height / 2 - 28, 4, 18);
+
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(-width / 2, -height / 2, width, height, 10);
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.beginPath();
+        ctx.roundRect(-width / 2 + 4, -height / 2 + 2, width / 2 - 4, height - 4, 6);
+        ctx.fill();
+
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.roundRect(-width / 2 + 6, -height / 2 + 18, width - 12, 18, 4);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.roundRect(-width / 2 + 7, height / 2 - 24, width - 14, 12, 3);
+        ctx.fill();
+
+        ctx.fillStyle = color;
+        ctx.fillRect(-width / 2 + 8, -height / 2 + 36, width - 16, 22);
+
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(-width / 2 + 5, -height / 2 + 1, 8, 4);
+        ctx.fillRect(width / 2 - 13, -height / 2 + 1, 8, 4);
+
+        ctx.restore();
+    }
+
+    // প্লেয়ারের জন্য স্পোর্টি নিঞ্জা বাইক (Ninja Bike) রেন্ডারিং ফাংশন
+    function drawNinjaBike(x, y, width, height, angle = 0) {
+        ctx.save();
+        ctx.translate(x + width / 2, y + height / 2);
+        ctx.rotate(angle);
+
+        // বাইকের ছায়া
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.beginPath();
+        ctx.ellipse(0, 5, width / 2 + 4, height / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // চাকা দুটি
+        ctx.fillStyle = '#111';
+        ctx.beginPath();
+        ctx.roundRect(-width / 2 - 2, -height / 2 + 8, 6, 22, 3);
+        ctx.roundRect(-width / 2 - 2, height / 2 - 26, 6, 22, 3);
+        ctx.fill();
+
+        // বাইকের বডি (Neon Cyan)
+        ctx.fillStyle = '#0ea5e9';
+        ctx.beginPath();
+        ctx.roundRect(-width / 2, -height / 2 + 10, width, height - 20, 12);
+        ctx.fill();
+
+        // ফুয়েল ট্যাংক ও সিট
+        ctx.fillStyle = '#0284c7';
+        ctx.beginPath();
+        ctx.roundRect(-width / 2 + 3, -height / 2 + 22, width - 6, 30, 8);
+        ctx.fill();
+
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(-width / 2 + 6, height / 2 - 32, width - 12, 16);
+
+        // স্পোর্টি উইন্ডস্ক্রিন
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.moveTo(-width / 2 + 4, -height / 2 + 14);
+        ctx.lineTo(width / 2 - 4, -height / 2 + 14);
+        ctx.lineTo(width / 2 - 8, -height / 2 + 30);
+        ctx.lineTo(-width / 2 + 8, -height / 2 + 30);
+        ctx.closePath();
+        ctx.fill();
+
+        // হ্যান্ডেলবার
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(-width / 2 - 4, -height / 2 + 18);
+        ctx.lineTo(width / 2 + 4, -height / 2 + 18);
+        ctx.stroke();
+
+        // হেডলাইট ও বিম আলো
+        ctx.fillStyle = '#fef08a';
+        ctx.shadowColor = '#fef08a';
+        ctx.shadowBlur = 8;
+        ctx.fillRect(-width / 2 + 8, -height / 2 + 6, width - 16, 4);
+        ctx.shadowBlur = 0;
+
+        const grad = ctx.createLinearGradient(0, -height / 2, 0, -height / 2 - 90);
+        grad.addColorStop(0, 'rgba(254, 240, 138, 0.4)');
+        grad.addColorStop(1, 'rgba(254, 240, 138, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(-width / 2 + 4, -height / 2);
+        ctx.lineTo(-width / 2 - 15, -height / 2 - 90);
+        ctx.lineTo(width / 2 + 15, -height / 2 - 90);
+        ctx.lineTo(width / 2 - 4, -height / 2);
+        ctx.fill();
+
+        // ব্রেক লাইট
+        if (keys.down) {
+            ctx.fillStyle = '#ff0000';
+            ctx.shadowColor = '#ff0000';
+            ctx.shadowBlur = 12;
+        } else {
+            ctx.fillStyle = '#991b1b';
+        }
+        ctx.fillRect(-width / 2 + 6, height / 2 - 8, width - 12, 3);
+
+        ctx.restore();
+    }
+
+    function drawBackground() {
+        ctx.fillStyle = '#1e5631';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const stripeHeight = 40;
+        const totalStripes = Math.ceil(canvas.height / stripeHeight) + 1;
+        const offset = roadOffset % (stripeHeight * 2);
+
+        for (let i = -1; i < totalStripes; i++) {
+            const y = i * stripeHeight + offset;
+            ctx.fillStyle = i % 2 === 0 ? '#ef4444' : '#f8fafc';
+            ctx.fillRect(roadX - 10, y, 10, stripeHeight);
+            ctx.fillRect(roadX + roadWidth, y, 10, stripeHeight);
+        }
+
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(roadX, 0, roadWidth, canvas.height);
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([30, 30]);
+        ctx.lineDashOffset = -roadOffset;
+
+        for (let i = 1; i < laneCount; i++) {
+            const lineX = roadX + i * laneWidth;
+            ctx.beginPath();
+            ctx.moveTo(lineX, 0);
+            ctx.lineTo(lineX, canvas.height);
+            ctx.stroke();
+        }
+        ctx.setLineDash([]);
+
+        for (let tree of trees) {
+            ctx.fillStyle = 'rgba(0,0,0,0.25)';
+            ctx.beginPath();
+            ctx.arc(tree.x + 5, tree.y + 6, tree.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#15803d';
+            ctx.beginPath();
+            ctx.arc(tree.x, tree.y, tree.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#22c55e';
+            ctx.beginPath();
+            ctx.arc(tree.x - 4, tree.y - 4, tree.size * 0.65, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function updateAndDrawParticles() {
+        if (player.speed > 2 && Math.random() < 0.6) {
+            particles.push({
+                x: player.x + player.width / 2 + (Math.random() * 8 - 4),
+                y: player.y + player.height,
+                size: Math.random() * 3 + 2,
+                alpha: 0.6
+            });
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.y += player.speed * 0.5 + 2;
+            p.size += 0.2;
+            p.alpha -= 0.025;
+
+            if (p.alpha <= 0) {
+                particles.splice(i, 1);
+            } else {
+                ctx.fillStyle = `rgba(203, 213, 225, ${p.alpha})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+
+    function updatePhysics() {
+        if (keys.up) {
+            player.speed += player.acceleration;
+        } else if (keys.down) {
+            player.speed -= player.brakePower;
+        } else {
+            player.speed -= player.friction;
+        }
+
+        player.speed = Math.max(2, Math.min(player.speed, player.maxSpeed));
+
+        if (keys.left) {
+            player.vx -= player.turnSpeed;
+        }
+        if (keys.right) {
+            player.vx += player.turnSpeed;
+        }
+
+        player.vx *= player.turnFriction;
+        player.x += player.vx;
+        player.angle = player.vx * 0.035;
+
+        if (player.x < roadX + 5) {
+            player.x = roadX + 5;
+            player.vx = 0;
+        }
+        if (player.x + player.width > roadX + roadWidth - 5) {
+            player.x = roadX + roadWidth - player.width - 5;
+            player.vx = 0;
+        }
+
+        roadOffset += player.speed;
+        score += Math.floor(player.speed * 0.15);
+
+        for (let tree of trees) {
+            tree.y += player.speed;
+            if (tree.y > canvas.height + 30) {
+                tree.y = -30;
+                tree.x = Math.random() < 0.5 ? Math.random() * 40 + 10 : Math.random() * 40 + 430;
+            }
+        }
+
+        if (Math.random() < 0.025) {
+            spawnEnemy();
+        }
+
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            let enemy = enemies[i];
+            enemy.y += (player.speed - enemy.speed);
+
+            if (
+                player.x + 3 < enemy.x + enemy.width - 3 &&
+                player.x + player.width - 3 > enemy.x + 3 &&
+                player.y + 3 < enemy.y + enemy.height - 3 &&
+                player.y + player.height - 3 > enemy.y + 3
+            ) {
+                endGame();
+            }
+
+            if (enemy.y > canvas.height + 150 || enemy.y < -300) {
+                enemies.splice(i, 1);
+            }
+        }
+
+        scoreDisplay.innerText = score;
+        speedDisplay.innerText = Math.floor(player.speed * 12);
+    }
+
+    function gameLoop() {
+        if (!isGameRunning) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        drawBackground();
+        updatePhysics();
+        updateAndDrawParticles();
+
+        for (let enemy of enemies) {
+            drawCar(enemy.x, enemy.y, enemy.width, enemy.height, enemy.color, 0);
+        }
+
+        // প্লেয়ারের জায়গায় নিঞ্জা বাইক রেন্ডার করা হচ্ছে
+        drawNinjaBike(player.x, player.y, player.width, player.height, player.angle);
+
+        animationId = requestAnimationFrame(gameLoop);
+    }
+
+    function startGame() {
+        startScreen.classList.add('hidden');
+        gameOverScreen.classList.add('hidden');
+
+        player.x = canvas.width / 2 - 16;
+        player.y = canvas.height - 110;
+        player.speed = 5;
+        player.vx = 0;
+        player.angle = 0;
+        score = 0;
+        enemies = [];
+        particles = [];
+
+        initEnvironment();
+        isGameRunning = true;
+        gameLoop();
+    }
+
+    function endGame() {
+        isGameRunning = false;
+        cancelAnimationFrame(animationId);
+        finalScoreText.innerText = `Your Final Score: ${score}`;
+        gameOverScreen.classList.remove('hidden');
+    }
+
+    initEnvironment();
+    drawBackground();
+    drawNinjaBike(player.x, player.y, player.width, player.height, 0);
+</script>
+
+</body>
+</html>
