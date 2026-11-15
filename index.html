@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Highway Racer - Ninja Bike Edition</title>
+    <title>Neon Highway - Ninja Bike Edition</title>
     <style>
         * {
             margin: 0;
@@ -85,7 +85,7 @@
             border-top: 2px solid #38bdf8;
         }
 
-        /* ভার্চুয়াল স্টিয়ারিং হুইল ডিজাইন */
+        /* ভার্চুয়াল স্টিয়ারিং হুইল */
         #steeringWheel {
             width: 110px;
             height: 110px;
@@ -236,7 +236,7 @@
         <canvas id="gameCanvas" width="480" height="460"></canvas>
     </div>
 
-    <!-- স্টিয়ারিং ও পেডেল কন্ট্রোল প্যানেল -->
+    <!-- কন্ট্রোল প্যানেল (স্টিয়ারিং ও পেডেল) -->
     <div class="control-panel">
         <div id="steeringWheel">
             <div class="wheel-center"></div>
@@ -269,7 +269,7 @@
     const laneCount = 3;
     const laneWidth = roadWidth / laneCount;
 
-    // প্লেয়ার নিঞ্জা বাইক অবজেক্ট (স্লিম সাইজ)
+    // প্লেয়ার নিঞ্জা বাইক
     const player = {
         x: canvas.width / 2 - 16,
         y: canvas.height - 110,
@@ -300,7 +300,7 @@
     bindPedal('accelPedal', 'up');
     bindPedal('brakePedal', 'down');
 
-    // স্টিয়ারিং হুইল ড্র্যাগ লজিক
+    // স্টিয়ারিং হুইল ড্র্যাগ কন্ট্রোল
     const steeringWheel = document.getElementById('steeringWheel');
     let isSteeringActive = false;
     let wheelCenterX = 0;
@@ -369,6 +369,7 @@
         }
     });
 
+    // কিবোর্ড সাপোর্ট (পিসির জন্য)
     window.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') keys.up = true;
         if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') keys.down = true;
@@ -417,7 +418,7 @@
         });
     }
 
-    // শত্রু গাড়ি রেন্ডারিং ফাংশন
+    // ট্রাফিক গাড়ি রেন্ডার করার ফাংশন
     function drawCar(x, y, width, height, color, angle = 0) {
         ctx.save();
         ctx.translate(x + width / 2, y + height / 2);
@@ -463,7 +464,7 @@
         ctx.restore();
     }
 
-    // প্লেয়ারের জন্য স্পোর্টি নিঞ্জা বাইক (Ninja Bike) রেন্ডারিং ফাংশন
+    // নিঞ্জা বাইক (Ninja Bike) রেন্ডার করার ফাংশন
     function drawNinjaBike(x, y, width, height, angle = 0) {
         ctx.save();
         ctx.translate(x + width / 2, y + height / 2);
@@ -497,7 +498,7 @@
         ctx.fillStyle = '#0f172a';
         ctx.fillRect(-width / 2 + 6, height / 2 - 32, width - 12, 16);
 
-        // স্পোর্টি উইন্ডস্ক্রিন
+        // উইন্ডস্ক্রিন
         ctx.fillStyle = '#1e293b';
         ctx.beginPath();
         ctx.moveTo(-width / 2 + 4, -height / 2 + 14);
@@ -704,7 +705,7 @@
             drawCar(enemy.x, enemy.y, enemy.width, enemy.height, enemy.color, 0);
         }
 
-        // প্লেয়ারের জায়গায় নিঞ্জা বাইক রেন্ডার করা হচ্ছে
+        // নিঞ্জা বাইক রেন্ডার করা হচ্ছে
         drawNinjaBike(player.x, player.y, player.width, player.height, player.angle);
 
         animationId = requestAnimationFrame(gameLoop);
