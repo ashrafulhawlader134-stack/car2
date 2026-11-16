@@ -340,6 +340,24 @@
         ctx.fillRect(width / 2 - 11, -height / 2, 7, 3);
 
         ctx.restore();
+        // ট্রাফিক গাড়ির মুভমেন্ট ও লেন পরিবর্তনের আপডেট লজিক
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            let enemy = enemies[i];
+            
+            // এই লাইনটা ঠিকমতো আছে কিনা চেক করো (প্লেয়ারের গতি এবং শত্রুর গতির হিসাব)
+            enemy.y += (player.speed - enemy.speed);
+
+            enemy.moveTimer--;
+            if (enemy.moveTimer <= 0) {
+                const randomLane = Math.floor(Math.random() * laneCount);
+                enemy.targetX = roadX + randomLane * laneWidth + (laneWidth - enemy.width) / 2;
+                enemy.moveTimer = Math.random() * 100 + 60;
+            }
+
+            if (Math.abs(enemy.x - enemy.targetX) > 1) {
+                enemy.x += (enemy.targetX > enemy.x) ? 1.5 : -1.5;
+            }
+            ...
     }
 
     // নিঞ্জা বাইক রেন্ডার করার ফাংশন
