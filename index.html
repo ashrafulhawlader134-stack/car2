@@ -74,92 +74,39 @@
             color: #38bdf8;
         }
 
-        /* স্টিয়ারিং ও পেডেল কন্ট্রোল প্যানেল */
+        /* মোবাইল ও পিসি কন্ট্রোল প্যানেল (বাটন ভিত্তিক) */
         .control-panel {
             width: 100%;
             background: #0f172a;
             display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 12px 15px;
+            justify-content: space-between;
+            padding: 12px 20px;
             border-top: 2px solid #38bdf8;
         }
 
-        /* ভার্চুয়াল স্টিয়ারিং হুইল */
-        #steeringWheel {
-            width: 110px;
-            height: 110px;
-            background: radial-gradient(circle, #334155 35%, #1e293b 70%, #0f172a 100%);
-            border: 6px solid #475569;
-            border-radius: 50%;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-            cursor: pointer;
-            touch-action: none;
-        }
-
-        #steeringWheel::before {
-            content: '';
-            position: absolute;
-            width: 14px;
-            height: 80%;
-            background: #475569;
-            border-radius: 4px;
-        }
-
-        #steeringWheel::after {
-            content: '';
-            position: absolute;
-            width: 80%;
-            height: 14px;
-            background: #475569;
-            border-radius: 4px;
-        }
-
-        .wheel-center {
-            width: 36px;
-            height: 36px;
-            background: #ef4444;
-            border-radius: 50%;
-            z-index: 2;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.4);
-        }
-
-        /* পেডেল (ব্রেক ও অ্যাক্সিলারেটর) */
-        .pedals {
+        .control-group {
             display: flex;
             gap: 15px;
         }
 
-        .pedal-btn {
-            width: 65px;
+        .touch-btn {
+            width: 55px;
             height: 55px;
-            border-radius: 10px;
+            background: rgba(56, 189, 248, 0.25);
+            border: 2px solid #38bdf8;
+            border-radius: 50%;
             color: white;
-            font-size: 16px;
+            font-size: 20px;
             font-weight: bold;
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            border: 2px solid rgba(255,255,255,0.2);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
 
-        #brakePedal {
-            background: linear-gradient(135deg, #dc2626, #ef4444);
-            border-color: #fca5a5;
-        }
-
-        #accelPedal {
-            background: linear-gradient(135deg, #16a34a, #22c55e);
-            border-color: #86efac;
-        }
-
-        .pedal-btn:active {
+        .touch-btn:active {
+            background: rgba(56, 189, 248, 0.6);
             transform: scale(0.95);
         }
 
@@ -233,18 +180,18 @@
             <button onclick="startGame()">PLAY AGAIN</button>
         </div>
 
-        <canvas id="gameCanvas" width="480" height="460"></canvas>
+        <canvas id="gameCanvas" width="480" height="440"></canvas>
     </div>
 
-    <!-- কন্ট্রোল প্যানেল (স্টিয়ারিং ও পেডেল) -->
+    <!-- সুনির্দিষ্ট বাটন কন্ট্রোল প্যানেল (বাম, ডান, ব্রেক, রেস) -->
     <div class="control-panel">
-        <div id="steeringWheel">
-            <div class="wheel-center"></div>
+        <div class="control-group">
+            <div class="touch-btn" id="leftBtn">◀</div>
+            <div class="touch-btn" id="rightBtn">▶</div>
         </div>
-
-        <div class="pedals">
-            <div class="pedal-btn" id="brakePedal">ব্রেক</div>
-            <div class="pedal-btn" id="accelPedal">রেস</div>
+        <div class="control-group">
+            <div class="touch-btn" id="brakeBtn" style="background: rgba(239, 68, 68, 0.25); border-color: #ef4444;">▼</div>
+            <div class="touch-btn" id="accelBtn" style="background: rgba(34, 197, 94, 0.25); border-color: #22c55e;">▲</div>
         </div>
     </div>
 </div>
@@ -269,10 +216,10 @@
     const laneCount = 3;
     const laneWidth = roadWidth / laneCount;
 
-    // প্লেয়ার নিঞ্জা বাইক
+    // প্লেয়ার নিঞ্জা বাইক
     const player = {
         x: canvas.width / 2 - 16,
-        y: canvas.height - 110,
+        y: canvas.height - 100,
         width: 32,
         height: 85,
         speed: 0,
@@ -288,7 +235,8 @@
 
     const keys = { up: false, down: false, left: false, right: false };
 
-    function bindPedal(id, keyName) {
+    // বাটন কন্ট্রোল ইভেন্ট বাইন্ডিং
+    function bindButton(id, keyName) {
         const btn = document.getElementById(id);
         if(!btn) return;
         btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyName] = true; });
@@ -297,77 +245,10 @@
         btn.addEventListener('mouseup', (e) => { e.preventDefault(); keys[keyName] = false; });
     }
 
-    bindPedal('accelPedal', 'up');
-    bindPedal('brakePedal', 'down');
-
-    // স্টিয়ারিং হুইল ড্র্যাগ কন্ট্রোল
-    const steeringWheel = document.getElementById('steeringWheel');
-    let isSteeringActive = false;
-    let wheelCenterX = 0;
-    let currentWheelAngle = 0;
-
-    steeringWheel.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        isSteeringActive = true;
-        const rect = steeringWheel.getBoundingClientRect();
-        wheelCenterX = rect.left + rect.width / 2;
-    });
-
-    window.addEventListener('touchmove', (e) => {
-        if (!isSteeringActive) return;
-        e.preventDefault();
-        let touchX = e.touches[0].clientX;
-        let diff = touchX - wheelCenterX;
-        
-        currentWheelAngle = Math.max(-60, Math.min(60, diff * 1.5));
-        steeringWheel.style.transform = `rotate(${currentWheelAngle}deg)`;
-
-        if (currentWheelAngle < -5) {
-            keys.left = true;
-            keys.right = false;
-        } else if (currentWheelAngle > 5) {
-            keys.right = true;
-            keys.left = false;
-        } else {
-            keys.left = false;
-            keys.right = false;
-        }
-    });
-
-    function resetSteering() {
-        isSteeringActive = false;
-        currentWheelAngle = 0;
-        steeringWheel.style.transform = `rotate(0deg)`;
-        keys.left = false;
-        keys.right = false;
-    }
-
-    steeringWheel.addEventListener('touchend', resetSteering);
-    window.addEventListener('mouseup', resetSteering);
-
-    steeringWheel.addEventListener('mousedown', (e) => {
-        isSteeringActive = true;
-        const rect = steeringWheel.getBoundingClientRect();
-        wheelCenterX = rect.left + rect.width / 2;
-    });
-
-    window.addEventListener('mousemove', (e) => {
-        if (!isSteeringActive) return;
-        let diff = e.clientX - wheelCenterX;
-        currentWheelAngle = Math.max(-60, Math.min(60, diff * 1.5));
-        steeringWheel.style.transform = `rotate(${currentWheelAngle}deg)`;
-
-        if (currentWheelAngle < -5) {
-            keys.left = true;
-            keys.right = false;
-        } else if (currentWheelAngle > 5) {
-            keys.right = true;
-            keys.left = false;
-        } else {
-            keys.left = false;
-            keys.right = false;
-        }
-    });
+    bindButton('leftBtn', 'left');
+    bindButton('rightBtn', 'right');
+    bindButton('accelBtn', 'up');
+    bindButton('brakeBtn', 'down');
 
     // কিবোর্ড সাপোর্ট (পিসির জন্য)
     window.addEventListener('keydown', (e) => {
@@ -402,7 +283,7 @@
 
     function spawnEnemy() {
         const lane = Math.floor(Math.random() * laneCount);
-        const enemyX = roadX + lane * laneWidth + (laneWidth - 44) / 2;
+        const enemyX = roadX + lane * laneWidth + (laneWidth - 40) / 2;
         
         for (let enemy of enemies) {
             if (Math.abs(enemy.y - (-100)) < 180) return;
@@ -411,14 +292,14 @@
         enemies.push({
             x: enemyX,
             y: -100,
-            width: 44,
-            height: 85,
+            width: 40,
+            height: 80,
             speed: Math.random() * 3 + 4,
             color: enemyColors[Math.floor(Math.random() * enemyColors.length)]
         });
     }
 
-    // ট্রাফিক গাড়ি রেন্ডার করার ফাংশন
+    // ট্রাফিক গাড়ি রেন্ডার করার ফিক্সড ফাংশন
     function drawCar(x, y, width, height, color, angle = 0) {
         ctx.save();
         ctx.translate(x + width / 2, y + height / 2);
@@ -426,70 +307,63 @@
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
         ctx.beginPath();
-        ctx.roundRect(-width / 2 + 5, -height / 2 + 8, width, height, 10);
+        ctx.roundRect(-width / 2 + 4, -height / 2 + 6, width, height, 8);
         ctx.fill();
 
         ctx.fillStyle = '#111';
-        ctx.fillRect(-width / 2 - 3, -height / 2 + 12, 4, 18);
-        ctx.fillRect(width / 2 - 1, -height / 2 + 12, 4, 18);
-        ctx.fillRect(-width / 2 - 3, height / 2 - 28, 4, 18);
-        ctx.fillRect(width / 2 - 1, height / 2 - 28, 4, 18);
+        ctx.fillRect(-width / 2 - 2, -height / 2 + 10, 3, 16);
+        ctx.fillRect(width / 2 - 1, -height / 2 + 10, 3, 16);
+        ctx.fillRect(-width / 2 - 2, height / 2 - 26, 3, 16);
+        ctx.fillRect(width / 2 - 1, height / 2 - 26, 3, 16);
 
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.roundRect(-width / 2, -height / 2, width, height, 10);
+        ctx.roundRect(-width / 2, -height / 2, width, height, 8);
         ctx.fill();
 
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.beginPath();
-        ctx.roundRect(-width / 2 + 4, -height / 2 + 2, width / 2 - 4, height - 4, 6);
+        ctx.roundRect(-width / 2 + 3, -height / 2 + 2, width / 2 - 3, height - 4, 4);
         ctx.fill();
 
         ctx.fillStyle = '#0f172a';
         ctx.beginPath();
-        ctx.roundRect(-width / 2 + 6, -height / 2 + 18, width - 12, 18, 4);
+        ctx.roundRect(-width / 2 + 5, -height / 2 + 15, width - 10, 16, 3);
         ctx.fill();
 
         ctx.beginPath();
-        ctx.roundRect(-width / 2 + 7, height / 2 - 24, width - 14, 12, 3);
+        ctx.roundRect(-width / 2 + 6, height / 2 - 22, width - 12, 10, 2);
         ctx.fill();
 
-        ctx.fillStyle = color;
-        ctx.fillRect(-width / 2 + 8, -height / 2 + 36, width - 16, 22);
-
         ctx.fillStyle = '#fef08a';
-        ctx.fillRect(-width / 2 + 5, -height / 2 + 1, 8, 4);
-        ctx.fillRect(width / 2 - 13, -height / 2 + 1, 8, 4);
+        ctx.fillRect(-width / 2 + 4, -height / 2, 7, 3);
+        ctx.fillRect(width / 2 - 11, -height / 2, 7, 3);
 
         ctx.restore();
     }
 
-    // নিঞ্জা বাইক (Ninja Bike) রেন্ডার করার ফাংশন
+    // নিঞ্জা বাইক রেন্ডার করার ফাংশন
     function drawNinjaBike(x, y, width, height, angle = 0) {
         ctx.save();
         ctx.translate(x + width / 2, y + height / 2);
         ctx.rotate(angle);
 
-        // বাইকের ছায়া
         ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
         ctx.beginPath();
         ctx.ellipse(0, 5, width / 2 + 4, height / 2, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // চাকা দুটি
         ctx.fillStyle = '#111';
         ctx.beginPath();
         ctx.roundRect(-width / 2 - 2, -height / 2 + 8, 6, 22, 3);
         ctx.roundRect(-width / 2 - 2, height / 2 - 26, 6, 22, 3);
         ctx.fill();
 
-        // বাইকের বডি (Neon Cyan)
         ctx.fillStyle = '#0ea5e9';
         ctx.beginPath();
         ctx.roundRect(-width / 2, -height / 2 + 10, width, height - 20, 12);
         ctx.fill();
 
-        // ফুয়েল ট্যাংক ও সিট
         ctx.fillStyle = '#0284c7';
         ctx.beginPath();
         ctx.roundRect(-width / 2 + 3, -height / 2 + 22, width - 6, 30, 8);
@@ -498,7 +372,6 @@
         ctx.fillStyle = '#0f172a';
         ctx.fillRect(-width / 2 + 6, height / 2 - 32, width - 12, 16);
 
-        // উইন্ডস্ক্রিন
         ctx.fillStyle = '#1e293b';
         ctx.beginPath();
         ctx.moveTo(-width / 2 + 4, -height / 2 + 14);
@@ -508,7 +381,6 @@
         ctx.closePath();
         ctx.fill();
 
-        // হ্যান্ডেলবার
         ctx.strokeStyle = '#94a3b8';
         ctx.lineWidth = 4;
         ctx.beginPath();
@@ -516,7 +388,6 @@
         ctx.lineTo(width / 2 + 4, -height / 2 + 18);
         ctx.stroke();
 
-        // হেডলাইট ও বিম আলো
         ctx.fillStyle = '#fef08a';
         ctx.shadowColor = '#fef08a';
         ctx.shadowBlur = 8;
@@ -534,7 +405,6 @@
         ctx.lineTo(width / 2 - 4, -height / 2);
         ctx.fill();
 
-        // ব্রেক লাইট
         if (keys.down) {
             ctx.fillStyle = '#ff0000';
             ctx.shadowColor = '#ff0000';
@@ -705,7 +575,6 @@
             drawCar(enemy.x, enemy.y, enemy.width, enemy.height, enemy.color, 0);
         }
 
-        // নিঞ্জা বাইক রেন্ডার করা হচ্ছে
         drawNinjaBike(player.x, player.y, player.width, player.height, player.angle);
 
         animationId = requestAnimationFrame(gameLoop);
@@ -716,7 +585,7 @@
         gameOverScreen.classList.add('hidden');
 
         player.x = canvas.width / 2 - 16;
-        player.y = canvas.height - 110;
+        player.y = canvas.height - 100;
         player.speed = 5;
         player.vx = 0;
         player.angle = 0;
