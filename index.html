@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Highway - Ninja Bike Edition</title>
+    <title>Neon Highway - Anime Ninja ZX-10R Edition</title>
     <style>
         * {
             margin: 0;
@@ -47,7 +47,7 @@
             background: #2e8b57;
         }
 
-        /* HUD (Score & Speedometer) */
+        /* HUD (Score, Lives & Speedometer) */
         .hud {
             position: absolute;
             top: 15px;
@@ -74,13 +74,13 @@
             color: #38bdf8;
         }
 
-        /* মোবাইল ও পিসি কন্ট্রোল প্যানেল (বাটন ভিত্তিক) */
+        /* কন্ট্রোল প্যানেল */
         .control-panel {
             width: 100%;
             background: #0f172a;
             display: flex;
             justify-content: space-between;
-            padding: 12px 20px;
+            padding: 15px 25px;
             border-top: 2px solid #38bdf8;
         }
 
@@ -90,13 +90,13 @@
         }
 
         .touch-btn {
-            width: 55px;
-            height: 55px;
+            width: 65px;
+            height: 65px;
             background: rgba(56, 189, 248, 0.25);
             border: 2px solid #38bdf8;
             border-radius: 50%;
             color: white;
-            font-size: 20px;
+            font-size: 24px;
             font-weight: bold;
             display: flex;
             justify-content: center;
@@ -107,7 +107,7 @@
 
         .touch-btn:active {
             background: rgba(56, 189, 248, 0.6);
-            transform: scale(0.95);
+            transform: scale(0.92);
         }
 
         /* Start & Game Over Screen */
@@ -165,12 +165,13 @@
     <div class="game-wrapper">
         <div class="hud">
             <div class="hud-box">SCORE: <span id="scoreDisplay">0</span></div>
+            <div class="hud-box" id="livesDisplay">❤️❤️❤️</div>
             <div class="hud-box">SPEED: <span id="speedDisplay">0</span> KM/H</div>
         </div>
 
         <div id="startScreen" class="overlay">
             <h1>Ninja Highway</h1>
-            <p>নিঞ্জা বাইক নিয়ে হাইওয়েতে ছুটুন এবং ট্রাফিক এড়িয়ে চলুন!</p>
+            <p>Anime Kawasaki Ninja বাইক নিয়ে ৪ লেনের হাইওয়েতে ছুটুন এবং স্পোর্টস কার ট্রাফিক এড়িয়ে চলুন!</p>
             <button onclick="startGame()">START RIDE</button>
         </div>
 
@@ -183,7 +184,7 @@
         <canvas id="gameCanvas" width="480" height="440"></canvas>
     </div>
 
-    <!-- সুনির্দিষ্ট বাটন কন্ট্রোল প্যানেল (বাম, ডান, ব্রেক, রেস) -->
+    <!-- কন্ট্রোল প্যানেল (বাম, ডান, ব্রেক, রেস) -->
     <div class="control-panel">
         <div class="control-group">
             <div class="touch-btn" id="leftBtn">◀</div>
@@ -205,15 +206,18 @@
     const startScreen = document.getElementById('startScreen');
     const gameOverScreen = document.getElementById('gameOverScreen');
     const finalScoreText = document.getElementById('finalScoreText');
+    const livesDisplay = document.getElementById('livesDisplay');
 
     let isGameRunning = false;
     let score = 0;
+    let lives = 3;
     let roadOffset = 0;
     let animationId;
 
-    const roadX = 80;
-    const roadWidth = 320;
-    const laneCount = 3;
+    // ৪ লেনের চাপা রাস্তা সেটআপ
+    const roadX = 100;
+    const roadWidth = 280;
+    const laneCount = 4;
     const laneWidth = roadWidth / laneCount;
 
     // প্লেয়ার নিঞ্জা বাইক
@@ -235,7 +239,6 @@
 
     const keys = { up: false, down: false, left: false, right: false };
 
-    // বাটন কন্ট্রোল ইভেন্ট বাইন্ডিং
     function bindButton(id, keyName) {
         const btn = document.getElementById(id);
         if(!btn) return;
@@ -250,7 +253,6 @@
     bindButton('accelBtn', 'up');
     bindButton('brakeBtn', 'down');
 
-    // কিবোর্ড সাপোর্ট (পিসির জন্য)
     window.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') keys.up = true;
         if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') keys.down = true;
@@ -268,7 +270,8 @@
     let trees = [];
     let enemies = [];
     let particles = [];
-    const enemyColors = ['#ef4444', '#eab308', '#a855f7', '#ec4899', '#14b8a6'];
+    // ক্লাসিক স্পোর্টস কারের আকর্ষণীয় কালার প্যালেট
+    const enemyColors = ['#3b82f6', '#ef4444', '#eab308', '#a855f7', '#14b8a6', '#475569'];
 
     function initEnvironment() {
         trees = [];
@@ -281,156 +284,209 @@
         }
     }
 
+    // ট্রাফিক স্পোর্টস কার স্পন
     function spawnEnemy() {
         const lane = Math.floor(Math.random() * laneCount);
-        const enemyX = roadX + lane * laneWidth + (laneWidth - 40) / 2;
+        const enemyX = roadX + lane * laneWidth + (laneWidth - 52) / 2;
         
         for (let enemy of enemies) {
-            if (Math.abs(enemy.y - (-100)) < 180) return;
+            if (Math.abs(enemy.y - (-120)) < 180) return;
         }
 
         enemies.push({
             x: enemyX,
-            y: -100,
-            width: 40,
-            height: 80,
-            speed: Math.random() * 3 + 4,
-            color: enemyColors[Math.floor(Math.random() * enemyColors.length)]
+            y: -120,
+            width: 52,
+            height: 95,
+            speed: Math.random() * 4 + 4,
+            color: enemyColors[Math.floor(Math.random() * enemyColors.length)],
+            targetX: enemyX,
+            moveTimer: Math.random() * 80 + 40
         });
     }
 
-    // ট্রাফিক গাড়ি রেন্ডার করার ফিক্সড ফাংশন
+    // ক্লাসিক স্পোর্টস কার (Porsche 911 স্টাইল) রেন্ডার করার ফাংশন
     function drawCar(x, y, width, height, color, angle = 0) {
         ctx.save();
         ctx.translate(x + width / 2, y + height / 2);
         ctx.rotate(angle);
 
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        // গাড়ির ছায়া
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
         ctx.beginPath();
-        ctx.roundRect(-width / 2 + 4, -height / 2 + 6, width, height, 8);
+        ctx.ellipse(0, 4, width / 2 + 6, height / 2, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = '#111';
-        ctx.fillRect(-width / 2 - 2, -height / 2 + 10, 3, 16);
-        ctx.fillRect(width / 2 - 1, -height / 2 + 10, 3, 16);
-        ctx.fillRect(-width / 2 - 2, height / 2 - 26, 3, 16);
-        ctx.fillRect(width / 2 - 1, height / 2 - 26, 3, 16);
+        // চাকাগুলো (ওয়াইড ফেন্ডার ও টায়ার)
+        ctx.fillStyle = '#090d16';
+        ctx.fillRect(-width / 2 - 3, -height / 2 + 12, 5, 18);
+        ctx.fillRect(width / 2 - 2, -height / 2 + 12, 5, 18);
+        ctx.fillRect(-width / 2 - 3, height / 2 - 28, 5, 18);
+        ctx.fillRect(width / 2 - 2, height / 2 - 28, 5, 18);
 
+        // গাড়ির মূল বডি (ক্লাসিক স্পোর্টস কার শেপ)
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.roundRect(-width / 2, -height / 2, width, height, 8);
+        ctx.roundRect(-width / 2, -height / 2, width, height, [16, 16, 10, 10]);
         ctx.fill();
 
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        // রিয়ার স্পয়লার (পেছনের উইং / স্পয়লার)
+        ctx.fillStyle = '#1e293b';
         ctx.beginPath();
-        ctx.roundRect(-width / 2 + 3, -height / 2 + 2, width / 2 - 3, height - 4, 4);
+        ctx.roundRect(-width / 2 + 4, height / 2 - 10, width - 8, 6, 2);
         ctx.fill();
 
-        ctx.fillStyle = '#0f172a';
+        // ছাদ ও কেবিন অংশ
+        ctx.fillStyle = '#334155';
         ctx.beginPath();
-        ctx.roundRect(-width / 2 + 5, -height / 2 + 15, width - 10, 16, 3);
+        ctx.roundRect(-width / 2 + 6, -height / 2 + 22, width - 12, height - 38, 8);
         ctx.fill();
 
+        // সামনের উইন্ডস্ক্রিন গ্লাস
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
         ctx.beginPath();
-        ctx.roundRect(-width / 2 + 6, height / 2 - 22, width - 12, 10, 2);
+        ctx.moveTo(-width / 2 + 8, -height / 2 + 24);
+        ctx.lineTo(width / 2 - 8, -height / 2 + 24);
+        ctx.lineTo(width / 2 - 10, -height / 2 + 42);
+        ctx.lineTo(-width / 2 + 10, -height / 2 + 42);
+        ctx.closePath();
         ctx.fill();
 
+        // পেছনের উইন্ডস্ক্রিন গ্লাস
+        ctx.beginPath();
+        ctx.roundRect(-width / 2 + 8, height / 2 - 32, width - 16, 12, 3);
+        ctx.fill();
+
+        // ক্লাসিক রাউন্ড হেডলাইট
         ctx.fillStyle = '#fef08a';
-        ctx.fillRect(-width / 2 + 4, -height / 2, 7, 3);
-        ctx.fillRect(width / 2 - 11, -height / 2, 7, 3);
+        ctx.shadowColor = '#fef08a';
+        ctx.shadowBlur = 6;
+        ctx.fillRect(-width / 2 + 6, -height / 2 + 2, 7, 5);
+        ctx.fillRect(width / 2 - 13, -height / 2 + 2, 7, 5);
+        ctx.shadowBlur = 0;
+
+        // পেছনের টেল লাইট
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(-width / 2 + 5, height / 2 - 4, width - 10, 3);
 
         ctx.restore();
-        // ট্রাফিক গাড়ির মুভমেন্ট ও লেন পরিবর্তনের আপডেট লজিক
-        for (let i = enemies.length - 1; i >= 0; i--) {
-            let enemy = enemies[i];
-            
-            // এই লাইনটা ঠিকমতো আছে কিনা চেক করো (প্লেয়ারের গতি এবং শত্রুর গতির হিসাব)
-            enemy.y += (player.speed - enemy.speed);
-
-            enemy.moveTimer--;
-            if (enemy.moveTimer <= 0) {
-                const randomLane = Math.floor(Math.random() * laneCount);
-                enemy.targetX = roadX + randomLane * laneWidth + (laneWidth - enemy.width) / 2;
-                enemy.moveTimer = Math.random() * 100 + 60;
-            }
-
-            if (Math.abs(enemy.x - enemy.targetX) > 1) {
-                enemy.x += (enemy.targetX > enemy.x) ? 1.5 : -1.5;
-            }
-            ...
     }
 
-    // নিঞ্জা বাইক রেন্ডার করার ফাংশন
+    // Anime Styled Kawasaki Ninja ZX-10R রেন্ডার করার ফাংশন
     function drawNinjaBike(x, y, width, height, angle = 0) {
         ctx.save();
         ctx.translate(x + width / 2, y + height / 2);
         ctx.rotate(angle);
 
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        // বাইকের ছায়া
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.beginPath();
-        ctx.ellipse(0, 5, width / 2 + 4, height / 2, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 5, width / 2 + 6, height / 2, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = '#111';
-        ctx.beginPath();
-        ctx.roundRect(-width / 2 - 2, -height / 2 + 8, 6, 22, 3);
-        ctx.roundRect(-width / 2 - 2, height / 2 - 26, 6, 22, 3);
-        ctx.fill();
-
-        ctx.fillStyle = '#0ea5e9';
-        ctx.beginPath();
-        ctx.roundRect(-width / 2, -height / 2 + 10, width, height - 20, 12);
-        ctx.fill();
-
-        ctx.fillStyle = '#0284c7';
-        ctx.beginPath();
-        ctx.roundRect(-width / 2 + 3, -height / 2 + 22, width - 6, 30, 8);
-        ctx.fill();
-
+        // চাকা দুটি
         ctx.fillStyle = '#0f172a';
-        ctx.fillRect(-width / 2 + 6, height / 2 - 32, width - 12, 16);
-
-        ctx.fillStyle = '#1e293b';
         ctx.beginPath();
-        ctx.moveTo(-width / 2 + 4, -height / 2 + 14);
-        ctx.lineTo(width / 2 - 4, -height / 2 + 14);
-        ctx.lineTo(width / 2 - 8, -height / 2 + 30);
-        ctx.lineTo(-width / 2 + 8, -height / 2 + 30);
+        ctx.roundRect(-width / 2 + 6, -height / 2 + 2, width - 12, 20, 4);
+        ctx.roundRect(-width / 2 + 5, height / 2 - 22, width - 10, 22, 4);
+        ctx.fill();
+
+        // এক্সহস্ট পাইপ (সিলভার)
+        ctx.fillStyle = '#cbd5e1';
+        ctx.beginPath();
+        ctx.roundRect(width / 2 - 2, height / 2 - 32, 6, 22, 3);
+        ctx.fill();
+
+        // অ্যানিমে স্টাইল উজ্জ্বল লাইম গ্রিন বডি
+        ctx.fillStyle = '#4ade80'; 
+        ctx.beginPath();
+        ctx.roundRect(-width / 2, -height / 2 + 12, width, height - 24, 10);
+        ctx.fill();
+
+        // অ্যানিমে স্পেশাল নিয়ন গ্রিন গ্লো ইফেক্ট
+        ctx.fillStyle = '#84cc16';
+        ctx.beginPath();
+        ctx.roundRect(-width / 2 + 2, -height / 2 + 10, width - 4, height - 26, 8);
+        ctx.fill();
+
+        // অ্যানিমে ক্যারেক্টার র‍্যাপ স্টাইল (বডির মাঝখানে ডিপ ব্ল্যাক গ্রাফিক্স)
+        ctx.fillStyle = '#18181b';
+        ctx.beginPath();
+        ctx.moveTo(-width / 2 + 2, -height / 2 + 24);
+        ctx.lineTo(width / 2 - 2, -height / 2 + 24);
+        ctx.lineTo(width / 2 - 4, -height / 2 + 55);
+        ctx.lineTo(-width / 2 + 4, -height / 2 + 55);
         ctx.closePath();
         ctx.fill();
 
-        ctx.strokeStyle = '#94a3b8';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(-width / 2 - 4, -height / 2 + 18);
-        ctx.lineTo(width / 2 + 4, -height / 2 + 18);
-        ctx.stroke();
+        // অ্যানিমে স্টাইল ফায়ার অরেঞ্জ স্ট্রাইপ (Goku Vibe)
+        ctx.fillStyle = '#f97316';
+        ctx.fillRect(-width / 2 + 2, -height / 2 + 22, 4, 20);
+        ctx.fillRect(width / 2 - 6, -height / 2 + 22, 4, 20);
 
-        ctx.fillStyle = '#fef08a';
-        ctx.shadowColor = '#fef08a';
-        ctx.shadowBlur = 8;
-        ctx.fillRect(-width / 2 + 8, -height / 2 + 6, width - 16, 4);
-        ctx.shadowBlur = 0;
-
-        const grad = ctx.createLinearGradient(0, -height / 2, 0, -height / 2 - 90);
-        grad.addColorStop(0, 'rgba(254, 240, 138, 0.4)');
-        grad.addColorStop(1, 'rgba(254, 240, 138, 0)');
-        ctx.fillStyle = grad;
+        // ফুয়েল ট্যাংক
+        ctx.fillStyle = '#65a30d';
         ctx.beginPath();
-        ctx.moveTo(-width / 2 + 4, -height / 2);
-        ctx.lineTo(-width / 2 - 15, -height / 2 - 90);
-        ctx.lineTo(width / 2 + 15, -height / 2 - 90);
-        ctx.lineTo(width / 2 - 4, -height / 2);
+        ctx.roundRect(-width / 2 + 4, -height / 2 + 28, width - 8, 22, 6);
         ctx.fill();
 
+        // স্পোর্টস সিট
+        ctx.fillStyle = '#090d16';
+        ctx.beginPath();
+        ctx.roundRect(-width / 2 + 5, height / 2 - 35, width - 10, 18, 4);
+        ctx.fill();
+
+        // উইন্ডস্ক্রিন (ডার্ক ভিজর)
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+        ctx.beginPath();
+        ctx.moveTo(-width / 2 + 5, -height / 2 + 12);
+        ctx.lineTo(width / 2 - 5, -height / 2 + 12);
+        ctx.lineTo(width / 2 - 8, -height / 2 + 26);
+        ctx.lineTo(-width / 2 + 8, -height / 2 + 26);
+        ctx.closePath();
+        ctx.fill();
+
+        // হ্যান্ডেলবার ও মিরর
+        ctx.strokeStyle = '#27272a';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(-width / 2 - 5, -height / 2 + 18);
+        ctx.lineTo(width / 2 + 5, -height / 2 + 18);
+        ctx.stroke();
+
+        ctx.fillStyle = '#18181b';
+        ctx.fillRect(-width / 2 - 7, -height / 2 + 14, 5, 3);
+        ctx.fillRect(width / 2 + 2, -height / 2 + 14, 5, 3);
+
+        // অ্যানিমে স্টাইল গ্লোয়িং নিয়ন হেডলাইট
+        ctx.fillStyle = '#38bdf8';
+        ctx.shadowColor = '#38bdf8';
+        ctx.shadowBlur = 12;
+        ctx.fillRect(-width / 2 + 6, -height / 2 + 8, 6, 3);
+        ctx.fillRect(width / 2 - 12, -height / 2 + 8, 6, 3);
+        ctx.shadowBlur = 0;
+
+        // সামনের হেডলাইটের বিম আলো
+        const grad = ctx.createLinearGradient(0, -height / 2, 0, -height / 2 - 95);
+        grad.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
+        grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(-width / 2 + 4, -height / 2 + 6);
+        ctx.lineTo(-width / 2 - 16, -height / 2 - 95);
+        ctx.lineTo(width / 2 + 16, -height / 2 - 95);
+        ctx.lineTo(width / 2 - 4, -height / 2 + 6);
+        ctx.fill();
+
+        // ব্রেক লাইট
         if (keys.down) {
-            ctx.fillStyle = '#ff0000';
-            ctx.shadowColor = '#ff0000';
-            ctx.shadowBlur = 12;
+            ctx.fillStyle = '#ef4444';
+            ctx.shadowColor = '#ef4444';
+            ctx.shadowBlur = 15;
         } else {
             ctx.fillStyle = '#991b1b';
         }
-        ctx.fillRect(-width / 2 + 6, height / 2 - 8, width - 12, 3);
+        ctx.fillRect(-width / 2 + 7, height / 2 - 10, width - 14, 3);
 
         ctx.restore();
     }
@@ -554,13 +610,26 @@
             }
         }
 
-        if (Math.random() < 0.025) {
+        if (Math.random() < 0.03) {
             spawnEnemy();
         }
 
+        // ট্রাফিক গাড়ির মুভমেন্ট ও ৩ লাইফ লজিক আপডেট
         for (let i = enemies.length - 1; i >= 0; i--) {
             let enemy = enemies[i];
-            enemy.y += (player.speed - enemy.speed);
+            
+            enemy.y += (player.speed - enemy.speed + 1.5);
+
+            enemy.moveTimer--;
+            if (enemy.moveTimer <= 0) {
+                const randomLane = Math.floor(Math.random() * laneCount);
+                enemy.targetX = roadX + randomLane * laneWidth + (laneWidth - enemy.width) / 2;
+                enemy.moveTimer = Math.random() * 90 + 50;
+            }
+
+            if (Math.abs(enemy.x - enemy.targetX) > 1) {
+                enemy.x += (enemy.targetX > enemy.x) ? 1.8 : -1.8;
+            }
 
             if (
                 player.x + 3 < enemy.x + enemy.width - 3 &&
@@ -568,10 +637,14 @@
                 player.y + 3 < enemy.y + enemy.height - 3 &&
                 player.y + player.height - 3 > enemy.y + 3
             ) {
-                endGame();
-            }
+                lives--; // ১টি লাইফ কমে যাবে
+                enemies.splice(i, 1); // ধাক্কা খাওয়া গাড়িটি মুছে যাবে
+                livesDisplay.innerText = '❤️'.repeat(Math.max(0, lives));
 
-            if (enemy.y > canvas.height + 150 || enemy.y < -300) {
+                if (lives <= 0) {
+                    endGame();
+                }
+            } else if (enemy.y > canvas.height + 150 || enemy.y < -300) {
                 enemies.splice(i, 1);
             }
         }
@@ -608,6 +681,8 @@
         player.vx = 0;
         player.angle = 0;
         score = 0;
+        lives = 3;
+        livesDisplay.innerText = '❤️❤️❤️';
         enemies = [];
         particles = [];
 
